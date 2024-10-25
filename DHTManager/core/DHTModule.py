@@ -1,4 +1,4 @@
-from injector import Injector, inject, Module, provider
+from injector import Module, provider
 from core.DHT import DHT
 from core.Peer import Peer
 from core.DHTService import DHTService

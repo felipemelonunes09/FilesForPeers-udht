@@ -2,6 +2,7 @@ from core.DHT import DHT
 from core.Peer import Peer
 from injector import inject
 from singleton_decorator import singleton
+import pickle
 
 @singleton
 class DHTService:
@@ -34,5 +35,5 @@ class DHTService:
     def get_peer(self, ip: str) -> Peer | None:
         return self.__dhash_table.get(ip, None)
     
-    def get_hash_table(self) -> DHT:
-        ...
+    def get_hash_table(self) -> bytes:
+        return pickle.dumps(dict(self.__dhash_table))

@@ -6,5 +6,7 @@ D_HASH_TABLE_NAME = "data/duser-hash-table"
 
 injector = Injector([DHTModule()])
 
-CONSUMERS_QUANTITY = 2
-RECEIVERS_QUANTITY = 2
+CONSUMERS_QUANTITY = 4
+HOST="127.0.0.1"
+PORT=8000
+BASIC_DECODER = 'utf-8'

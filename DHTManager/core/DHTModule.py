@@ -1,14 +1,11 @@
 from injector import Module, provider
-from core.DHT import DHT
 from core.Peer import Peer
 from core.DHTService import DHTService
 import globals
+import shelve
 
 class DHTModule(Module):
-    @provider
-    def provide_dht(self) -> DHT:
-        return DHT(globals.D_HASH_TABLE_NAME, default_factory=Peer)
     
     @provider
-    def provide_dht_service(self, dht: DHT) -> DHTService:
-        return DHTService(dht)
+    def provide_dht_service(self) -> DHTService:
+        return DHTService(globals.D_HASH_TABLE_NAME)

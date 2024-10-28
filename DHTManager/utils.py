@@ -12,9 +12,6 @@ class ClientState(Enum):
     DELETE_PEER=5
     UPDATE_PEER=6
     GET_PEER=7
-    
-class ServerState(Enum):
-    SENDING_INFO=1
 
 def get_logger(name: str) -> logging.Logger:
     os.makedirs("logs", exist_ok=True)
@@ -27,3 +24,25 @@ def get_logger(name: str) -> logging.Logger:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     return logger
+
+class Message():
+    class MessageAction(Enum):
+        ADD_PEER="peer add"
+        REMOVE_PEER="peer remove"
+        UPDATE_PEER="peer update"
+        GET_PEER="peer get"
+    class MessageResult(Enum):
+        ERROR="error"    
+        COMPLETED="completed"
+    
+    def __init__(self) -> None:
+        self.action: Message.MessageAction = None
+        self.result: Message.MessageResult = None
+        self.data: dict = None
+        
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "action": self.action.value,
+            "result": self.result.value,
+            "data": self.data
+        }

@@ -18,7 +18,7 @@ class Client():
             "message_type": 3,
             "data": {
                 "peer_ip": "101.3.4.2",
-                "peer_port": 8000,
+                "peer_port": "8001",
                 "peer_name": "Felipe Nunes"
             }
         }
@@ -26,6 +26,7 @@ class Client():
         self.socket.connect(self.address)
         self.socket.send(json.dumps(data).encode("utf-8"))
         data = self.socket.recv(1024)
+        print(data)
         print(json.loads(data.decode("utf-8")))
         
 if __name__ == "__main__":

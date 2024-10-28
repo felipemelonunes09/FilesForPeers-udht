@@ -22,7 +22,6 @@ class Client():
         
         _ = pickle.loads(data)
 
-        # Agora `dicionario` é o dicionário original
         print(_)
         
 if __name__ == "__main__":

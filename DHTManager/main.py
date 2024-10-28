@@ -1,14 +1,12 @@
 import json
-from typing import List
-
 from utils import ClientState, ServerState, get_logger
 from core.DHTService import DHTService
+from typing import List
 from core.Peer import Peer
 from queue import Queue
 from socket import *
 import threading
 import globals
-
 
 class Server:
     def __init__(self):
@@ -19,14 +17,13 @@ class Server:
         self.__consumers = globals.CONSUMERS_QUANTITY
         self.__server_address = (globals.HOST, globals.PORT)
         self.__socket = socket(AF_INET, SOCK_STREAM)
-        self.__queue:Queue[Peer.tuple] = Queue()
+        self.__queue:Queue[Peer.ptuple] = Queue()
     
     def start(self) -> None: 
         self.logger.info("(+) Server started.")
         self.__socket.bind(self.__server_address)
         self.__create_consumers()
-        
-        self.__socket.listen(10)
+        self.__socket.listen(globals.SOCKETS_CONNECTION_LIMIT)
         
         while True:
             connection, address = self.__socket.accept()
@@ -44,7 +41,6 @@ class Server:
                 data: dict = json.loads(data)
                 message_type = int(data.get("message_type", -1))
                 bdata = data.get("data", dict())
-                
                 if message_type != ClientState.CLOSE:   
                     self.__queue.put((message_type, bdata, address, connection))
                     self.logger.info(f"(*) {address} request code: {message_type} on queue")
@@ -53,13 +49,17 @@ class Server:
                     connection.close()
             except json.decoder.JSONDecodeError as e:
                 alive=False
-                connection.close
-
+                connection.close()
+                self.logger.error(f"Invalid JSON data received from {address}: {e}")
+            except Exception as e:
+                connection.close()
+                alive = False
+                self.logger.error(f"Unexpected error handling client {address}: {e}")
+            
     def __create_consumers(self) -> None:
         def consumer() -> None:
             while True:
                 message_type, data, address, connection = self.__queue.get()
-                message = {}
                 peer_ip = data.get("peer_ip", "")
                 peer_name = data.get("peer_name", "")
                 peer_port = data.get("peer_port", "")
@@ -67,30 +67,26 @@ class Server:
                 if message_type == 2:
                     self.logger.info(f"(*) {address} request: sending hash-table without code")
                     result = self.dht_service.get_hash_table()
-                    connection.send(result)
-                elif message_type == 4:
-                    result = self.dht_service.remove_peer(peer_ip)
-                    self.logger.info(f"(*) {address} request: removing peer result: {result} ")
+                    connection.sendall(result)
+                else:
+                    message = {}
+                    if message_type == 4:
+                        result = self.dht_service.remove_peer(peer)
+                        self.logger.info(f"(*) {address} request: removing peer result: {result} ")
+                    elif message_type == 3:
+                        result = self.dht_service.create_peer(peer)
+                        self.logger.info(f"(*) {address} request: adding peer result: {result} ")
+                        message['data'] = result
+                    elif message_type == 7:
+                        peer: dict[str, str] = self.dht_service.get_peer(peer_ip)
+                        self.logger.info(f"(*) {address} request: getting peer result: {peer} ")
+                        message['data'] = peer
+                    elif message_type == 6:
+                        result = self.dht_service.update_peer(peer)
+                        self.logger.info(f"(*) {address} request: updating peer result: {result}")
+                        message['data'] = result
                     message = json.dumps(message).encode(globals.BASIC_DECODER)
-                    connection.send(message)
-                elif message_type == 3:
-                    result = self.dht_service.create_peer(peer)
-                    self.logger.info(f"(*) {address} request: adding peer result: {result} ")
-                    message['data'] = result
-                    message = json.dumps(message).encode(globals.BASIC_DECODER)
-                    connection.send(message)
-                elif message_type == 7:
-                    peer: Peer = self.dht_service.get_peer(peer_ip)
-                    self.logger.info(f"(*) {address} request: getting peer result: {peer.to_tuple()} ")
-                    message['data'] = peer
-                    message = json.dumps(message).encode(globals.BASIC_DECODER)
-                    connection.send(message)
-                elif message_type == 6:
-                    result = self.dht_service.update_peer(peer)
-                    self.logger.info(f"(*) {address} request: updating peer result: {result}")
-                    message['data'] = result
-                    message = json.dumps(message).encode(globals.BASIC_DECODER)
-                    connection.send(message)
+                    connection.sendall(message)
                     
         for _ in range(self.__consumers):
             consumer_thread = threading.Thread(target=consumer)

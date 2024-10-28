@@ -1,5 +1,5 @@
 import json
-from utils import ClientState, ServerState, get_logger
+from utils import ClientState, Message, get_logger
 from core.DHTService import DHTService
 from typing import List
 from core.Peer import Peer
@@ -64,35 +64,42 @@ class Server:
                 peer_name = data.get("peer_name", "")
                 peer_port = data.get("peer_port", "")
                 peer = Peer(ip=peer_ip, name=peer_name, port=peer_port)
-                if message_type == 2:
+                if message_type == ClientState.SEND_HASH_TABLE.value:
                     self.logger.info(f"(*) {address} request: sending hash-table without code")
                     result = self.dht_service.get_hash_table()
                     connection.sendall(result)
                 else:
-                    message = {}
-                    if message_type == 4:
-                        result = self.dht_service.remove_peer(peer)
-                        self.logger.info(f"(*) {address} request: removing peer result: {result} ")
-                    elif message_type == 3:
-                        result = self.dht_service.create_peer(peer)
-                        self.logger.info(f"(*) {address} request: adding peer result: {result} ")
-                        message['data'] = result
-                    elif message_type == 7:
-                        peer: dict[str, str] = self.dht_service.get_peer(peer_ip)
-                        self.logger.info(f"(*) {address} request: getting peer result: {peer} ")
-                        message['data'] = peer
-                    elif message_type == 6:
-                        result = self.dht_service.update_peer(peer)
-                        self.logger.info(f"(*) {address} request: updating peer result: {result}")
-                        message['data'] = result
-                    message = json.dumps(message).encode(globals.BASIC_DECODER)
+                    message = Message()
+                    try:
+                        result = False
+                        if message_type == ClientState.REMOVE_PEER.value:
+                            message.action = Message.MessageAction.REMOVE_PEER
+                            result = self.dht_service.remove_peer(peer)
+                            self.logger.info(f"(*) {address} request: removing peer result: {result} ")
+                        elif message_type == ClientState.ADD_PEER.value:
+                            message.action = Message.MessageAction.ADD_PEER
+                            result = self.dht_service.create_peer(peer)
+                            self.logger.info(f"(*) {address} request: adding peer result: {result} ")
+                            message.data = result
+                        elif message_type == ClientState.GET_PEER.value:
+                            message.action = Message.MessageAction.GET_PEER
+                            peer: dict[str, str] = self.dht_service.get_peer(peer_ip)
+                            self.logger.info(f"(*) {address} request: getting peer result: {peer} ")
+                            message.data = peer
+                        elif message_type == ClientState.UPDATE_PEER.value:
+                            message.action = Message.MessageAction.UPDATE_PEER
+                            result = self.dht_service.update_peer(peer)
+                            self.logger.info(f"(*) {address} request: updating peer result: {result}")
+                            message.data = result
+                        message.result = Message.MessageResult.COMPLETED if result else Message.MessageResult.ERROR
+                    except Exception as e:
+                        message.result = message.MessageResult.ERROR
+                    message = json.dumps(message.to_dict()).encode(globals.BASIC_DECODER)
                     connection.sendall(message)
-                    
         for _ in range(self.__consumers):
             consumer_thread = threading.Thread(target=consumer)
             self.__consumers_list.append(consumer_thread)
             consumer_thread.start()
-        
 
 if __name__ == "__main__":
     server = Server()

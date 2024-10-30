@@ -9,13 +9,15 @@ import threading
 import globals
 
 class Server:
-    def __init__(self):
+    def __init__(self, port: int, host: str, dht_service: DHTService):
+        print(port)
+        print(host)
         self.logger = get_logger("ServerLogger")
-        self.dht_service = globals.injector.get(DHTService)
+        self.dht_service = dht_service
+        self.__consumers = globals.CONSUMERS_QUANTITY
         self.__client_list: List[threading.Thread] = list()
         self.__consumers_list: List[threading.Thread] = list()
-        self.__consumers = globals.CONSUMERS_QUANTITY
-        self.__server_address = (globals.HOST, globals.PORT)
+        self.__server_address = (host, port)
         self.__socket = socket(AF_INET, SOCK_STREAM)
         self.__queue:Queue[Peer.ptuple] = Queue()
     
@@ -102,5 +104,5 @@ class Server:
             consumer_thread.start()
 
 if __name__ == "__main__":
-    server = Server()
+    server = Server(port=globals.PORT, host=globals.HOST, dht_service=globals.injector.get(DHTService))
     server.start()

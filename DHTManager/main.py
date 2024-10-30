@@ -9,6 +9,7 @@ import threading
 import globals
 
 class Server:
+    
     def __init__(self, port: int, host: str, dht_service: DHTService):
         print(port)
         print(host)

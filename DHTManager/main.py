@@ -11,8 +11,6 @@ import globals
 class Server:
     
     def __init__(self, port: int, host: str, dht_service: DHTService):
-        print(port)
-        print(host)
         self.logger = get_logger("ServerLogger")
         self.dht_service = dht_service
         self.__consumers = globals.CONSUMERS_QUANTITY

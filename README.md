@@ -19,6 +19,11 @@ This component is responsible for maintaining sufficient peer information to est
 This application is divided into two microservices to optimize resource utilization, DHTManager and DHTSync.
 
 ## DHTManager
+The DHTManager is a microservice responsible for managing the Distributed Hash Table (DHT). It provides an interface for creating, deleting, updating, and retrieving peers, as well as accessing all data within the hash table. Additionally, it handles the persistence of the hash table and manages the serialization and deserialization of its data.
+
+This microservice exclusively allows connections from localhost, ensuring that no external access is permitted. It is essential to note that this design prioritizes security and local communication among microservices.
+
+### Diagram 
 
 ![DHT Manager Diagram](https://raw.githubusercontent.com/felipemelonunes09/FilesForPeers-udht/main/docs/dhtmanager-driagram)
 

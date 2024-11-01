@@ -27,3 +27,13 @@ This microservice exclusively allows connections from localhost, ensuring that n
 
 ![DHT Manager Diagram](https://raw.githubusercontent.com/felipemelonunes09/FilesForPeers-udht/main/docs/dhtmanager-driagram)
 
+### Running
+To run this microservice, download the code and use the following command, specifying the desired port:
+```python
+python3 main.py DHT_PORT=<port>
+```
+
+### Usage 
+
+
+

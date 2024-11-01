@@ -17,3 +17,8 @@ This project aims to utilize a decentralized network for peer-to-peer file shari
 This component is responsible for maintaining sufficient peer information to establish connections and synchronize data with other peers. It manages the sharing of its own hash table, merges it with those of other peers, and facilitates the distribution of the updated hash table across the network.
 
 This application is divided into two microservices to optimize resource utilization, DHTManager and DHTSync.
+
+## DHTManager
+
+![DHT Manager Diagram](https://raw.githubusercontent.com/felipemelonunes09/FilesForPeers-udht/main/docs/dhtmanager-driagram)
+

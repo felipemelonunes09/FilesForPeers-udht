@@ -33,7 +33,7 @@ To run this microservice, download the code and use the following command, speci
 python3 main.py DHT_PORT=<port>
 ```
 If you have a containerized environment, you can modify the variable in the docker-compose file and use the following command to bring up all containers using Docker:
-```shell
+```bash
 podman-compose up --build
 ```
 

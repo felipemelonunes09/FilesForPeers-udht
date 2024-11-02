@@ -45,6 +45,7 @@ To use this microservice, establish a local TCP/IP connection with the specified
 - Edit Peer: Modify details of an existing peer.
 - Get Peer: Retrieve information about a specific peer.
 - Get HashTable: Access the current hash table binary.
+- Close: to send a signal to the server that you are closing the connection.
 
 
 

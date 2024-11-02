@@ -38,6 +38,13 @@ docker-compose up --build
 ```
 
 ### Usage 
+To use this microservice, establish a local TCP/IP connection with the specified service port. Once connected, you can interact with the service using the following options:
+
+- Create Peer: Add a new peer.
+- Delete Peer: Remove an existing peer.
+- Edit Peer: Modify details of an existing peer.
+- Get Peer: Retrieve information about a specific peer.
+- Get HashTable: Access the current hash table binary.
 
 
 

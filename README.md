@@ -63,7 +63,45 @@ Results must be decoded in UTF-8 and deserialized as a JSON Object
 ```
 
 - Delete Peer: Remove an existing peer.
+```python
+{
+    "message_type": 4,
+    "data": {
+       "peer_ip": <str:ip>
+     }
+}
+```
+The data must be serialized as a JSON object and encoded in UTF-8 before being sent to the server.
+Results must be decoded in UTF-8 and deserialized as a JSON Object
+```python
+{
+    "action": "peer remove",
+    "result": "completed",
+    "data": <bool:data>
+}
+```
+ 
 - Edit Peer: Modify details of an existing peer.
+ ```python
+{
+    "message_type": 6,
+    "data": {
+       "peer_ip": <str:ip>,
+       "peer_port": <str:port>,
+       "peer_name": <str:name>
+     }
+}
+```
+The data must be serialized as a JSON object and encoded in UTF-8 before being sent to the server.
+Results must be decoded in UTF-8 and deserialized as a JSON Object
+```python
+{
+    "action": "peer remove",
+    "result": "completed",
+    "data": <bool:data>
+}
+```
+
 - Get Peer: Retrieve information about a specific peer.
 - Get HashTable: Access the current hash table binary.
 - Close: to send a signal to the server that you are closing the connection.

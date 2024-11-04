@@ -96,15 +96,50 @@ The data must be serialized as a JSON object and encoded in UTF-8 before being s
 Results must be decoded in UTF-8 and deserialized as a JSON Object
 ```python
 {
-    "action": "peer remove",
+    "action": "peer update",
     "result": "completed",
     "data": <bool:data>
 }
 ```
 
 - Get Peer: Retrieve information about a specific peer.
+   ```python
+{
+    "message_type": 7,
+    "data": {
+       "peer_ip": <str:ip>
+     }
+}
+The data must be serialized as a JSON object and encoded in UTF-8 before being sent to the server.
+Results must be decoded in UTF-8 and deserialized as a JSON Object
+```python
+{
+    "action": "peer get",
+    "result": "completed",
+    "data":  {
+        'name': <str:name>,
+        'ip': <str:ip>,
+        'port': <str:port>
+        'createdAt': <str:created-at>
+        'lastConnectionOn': <str:last-connection-on>
+    }
+}
+```
 - Get HashTable: Access the current hash table binary.
+```python
+{
+    "message_type": 2
+}
+```
+The data must be serialized as a JSON object and encoded in UTF-8 before being sent to the server.
+This code does not currently return a JSON object as a response. Instead, it sends back a hash table's binary structure formatted as a JSON object.
+
 - Close: to send a signal to the server that you are closing the connection.
+```python
+{
+    "message_type": 1
+}
+```
 
 
 

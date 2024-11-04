@@ -42,7 +42,7 @@ To use this microservice, establish a local TCP/IP connection with the specified
 
 - Create Peer: Add a new peer.
 ```python
-data = {
+{
     "message_type": 3,
     "data": {
        "peer_ip": <str:ip>,
@@ -53,6 +53,14 @@ data = {
 ```
 
 The data must be serialized as a JSON object and encoded in UTF-8 before being sent to the server.
+Results must be decoded in UTF-8 and deserialized as a JSON Object
+```python
+{
+    "action": "peer add",
+    "result": "completed",
+    "data": <bool:data>
+}
+```
 
 - Delete Peer: Remove an existing peer.
 - Edit Peer: Modify details of an existing peer.

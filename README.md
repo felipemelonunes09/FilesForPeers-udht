@@ -103,13 +103,14 @@ Results must be decoded in UTF-8 and deserialized as a JSON Object
 ```
 
 - Get Peer: Retrieve information about a specific peer.
-   ```python
+```python
 {
     "message_type": 7,
     "data": {
        "peer_ip": <str:ip>
      }
 }
+```
 The data must be serialized as a JSON object and encoded in UTF-8 before being sent to the server.
 Results must be decoded in UTF-8 and deserialized as a JSON Object
 ```python

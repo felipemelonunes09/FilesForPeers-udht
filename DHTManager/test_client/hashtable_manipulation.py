@@ -15,7 +15,7 @@ class Client():
         
         self.encoding = 'utf-8'
         data = {
-            "message_type": 3,
+            "message_type": 7,
             "data": {
                 "peer_ip": "101.3.4.2",
                 "peer_port": "8001",

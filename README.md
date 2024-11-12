@@ -13,6 +13,8 @@ This project aims to utilize a decentralized network for peer-to-peer file shari
 
  - **BlockChain** (BlockChain Application) - This blockchain system is responsible for storing and recording new transactions, categorized as _Upload Blocks_, _Download Blocks_, or _Hold Stake Blocks_. It operates using a proof-of-stake mechanism for block validation, ensuring efficient and secure transaction processing within the network.
 
+# Team
+
 # UDHT 
 This component is responsible for maintaining sufficient peer information to establish connections and synchronize data with other peers. It manages the sharing of its own hash table, merges it with those of other peers, and facilitates the distribution of the updated hash table across the network.
 

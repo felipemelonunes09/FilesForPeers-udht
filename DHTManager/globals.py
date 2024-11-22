@@ -12,7 +12,7 @@ injector = Injector([DHTModule()])
 CONSUMERS_QUANTITY = 4
 
 HOST = "127.0.0.1"
-PORT = int(os.getenv("DHT_PORT", 8000))  # Ensure PORT is an integer
+PORT = int(os.getenv("DHT_PORT", 3002))  # Ensure PORT is an integer
 
 # Encoding Settings
 BASIC_DECODER = 'utf-8'

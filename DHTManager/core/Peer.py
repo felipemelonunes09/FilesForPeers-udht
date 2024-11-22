@@ -9,6 +9,7 @@ class Peer:
         self.ip = ip
         self.port = port
         self.created_at = str(datetime.now())
+        self.updated_at = str(datetime.now())
         self.last_connection_on = str(datetime.now())
         
     def to_tuple(self) -> tuple[str, str, str, str, str]:
@@ -20,5 +21,6 @@ class Peer:
             "ip": self.ip,
             "port": self.port,
             "createdAt": self.created_at,
+            "updatedAt": self.updated_at,
             "lastConnectionOn": self.last_connection_on
         }

@@ -10,12 +10,12 @@ class Client():
         self.socket = socket(AF_INET, SOCK_STREAM)
         
         self.host = '127.0.0.1'
-        self.port = 8000 
+        self.port = 3002
         self.address = (self.host, self.port)
         
         self.encoding = 'utf-8'
         data = {
-            "message_type": 7,
+            "message_type": 3,
             "data": {
                 "peer_ip": "101.3.4.2",
                 "peer_port": "8001",

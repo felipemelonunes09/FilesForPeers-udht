@@ -23,6 +23,7 @@ class DHTService:
         with shelve.open(self.__filename) as hash_table:
             registry = hash_table.get(peer.ip, None)
             if registry:
+                peer.updated_at = datetime.now()
                 hash_table[peer.ip] = peer.to_dict()
                 return True
         return False

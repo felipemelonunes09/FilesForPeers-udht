@@ -1,4 +1,6 @@
 
+from datetime import datetime
+from enum import Enum
 import json
 from utils import get_logger
 import pickle
@@ -12,8 +14,8 @@ import globals
 class Server:
     class ClientState(Enum):
         CLOSE = 1
-        RECEIVE_HASH_TABLE = 2
-        SEND_HASH_TABLE = 3
+        SEND_HASH_TABLE = 2
+        RECEIVE_HASH_TABLE = 3
     
     def  __init__(self, host: str, port: int, dht_manager_address: tuple):
         self.__host = host
@@ -60,7 +62,7 @@ class Server:
                 "data": {}
             }
 
-            self.socket.sendall(json.dumps(request).encode(globals.BASIC_DECODER))
+            self.__socket_manager.sendall(json.dumps(request).encode(globals.BASIC_DECODER))
 
             response = self.__socket_manager.recv(1024)
             self.__in_memory_hash_table = pickle.loads(response)
@@ -68,7 +70,7 @@ class Server:
         except Exception as e:
             self.logger.error(f"Error requesting hash table: {e}")
     
-    def __handle_peer_connection(self, connection: socket, address: tuple, is_client=False) -> None:
+    def __handle_client_peer(self, connection: socket, address: tuple, is_client=False) -> None:
         try:
             while True:
                 data = connection.recv(1024)
@@ -81,15 +83,47 @@ class Server:
                 
                 if message_type == 2:
                     local_table = pickle.dumps(self.__in_memory_hash_table)
+                    connection.sendall(local_table)
                 elif message_type == 3:
-                    peer_table = response.get("data", {})
+                    peer_table = data.get("data", {})
                     self.__merge_tables(peer_table)
                 
         except Exception as e:
             self.logger.error(f"Error handling peer {address}: {e}")
 
-    #def __merge_tables():
-    
+    def __merge_tables(self, peer_table: dict) -> None:
+        with self.__lock:
+            local_tokens = set(self.__in_memory_hash_table.keys())
+            peer_tokens = set(peer_table.keys())
+            new_tokens = peer_tokens - local_tokens
+            conflicting_tokens = local_tokens & peer_tokens
+            
+            for token in new_tokens:
+                self.__in_memory_hash_table[token] = peer_table[token]
+                self.logger.info(f"Added new token {token} to the hash table.")
+            
+            for token in conflicting_tokens:
+                local_data = self.__in_memory_hash_table[token]
+                peer_data = peer_table[token]
+                if self.__should_update(local_data, peer_data):
+                    self.__in_memory_hash_table[token] = peer_data
+                    self.logger.info(f"Updated token {token} in the hash table.")
+
+    def __should_update(self, local_data: dict, remote_data: dict) -> bool:       
+        local_timestamp = local_data.get("updatedAt")
+        remote_timestamp = remote_data.get("updatedAt")
+        
+        if not local_timestamp or not remote_timestamp:
+            self.logger.warning(f"Missing 'updatedAt' for token. Skipping update.")
+            return False
+        try:
+            local_time = datetime.fromisoformat(local_timestamp)
+            remote_time = datetime.fromisoformat(remote_timestamp)
+            return remote_time > local_time 
+        except ValueError as e:
+            self.logger.error(f"Invalid timestamp format: {e}")
+            return False
+            
     def __close(self):
         self.__local_socket.close()
 

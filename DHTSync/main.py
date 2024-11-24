@@ -72,21 +72,44 @@ class Server:
     
     def __handle_client_peer(self, connection: socket, address: tuple, is_client=False) -> None:
         try:
+            is_synced = False
+            
             while True:
                 data = connection.recv(1024)
                 if not data:
                     break
-                response = response.decode(globals.BASIC_DECODER)
-                self.logger.info(f"(*) received {data} from {address}")
-                data: dict = json.loads(response)
-                message_type = int(data.get("message_type", -1))
                 
-                if message_type == 2:
-                    local_table = pickle.dumps(self.__in_memory_hash_table)
-                    connection.sendall(local_table)
-                elif message_type == 3:
-                    peer_table = data.get("data", {})
+                decoded_data = data.decode(globals.BASIC_DECODER)
+                self.logger.info(f"(*) received {data} from {address}")
+                request: dict = json.loads(decoded_data)
+                message_type = int(request.get("message_type", -1))
+                
+                if message_type == self.ClientState.RECEIVE_HASH_TABLE.value:
+                    peer_table = pickle.loads(request.get("data", b""))
                     self.__merge_tables(peer_table)
+                    
+                    if not is_synced:
+                        local_table = pickle.dumps(self.__in_memory_hash_table)
+                        response = {
+                            "message_type": self.ClientState.SEND_HASH_TABLE.value,
+                            "data": local_table
+                        }
+                        connection.sendall(json.dumps(response).encode(globals.BASIC_DECODER))
+                        is_synced = True
+                    
+                elif message_type == self.ClientState.SEND_HASH_TABLE.value:
+                    local_table = pickle.dumps(self.__in_memory_hash_table)
+                    
+                    response = {
+                        "message_type": self.ClientState.RECEIVE_HASH_TABLE.value,
+                        "data": local_table
+                    }
+                    
+                    connection.sendall(json.dumps(response).encode(globals.BASIC_DECODER))
+
+                    peer_table = pickle.loads(request.get("data", b""))
+                    self.__merge_tables(peer_table)
+                    is_synced = True
                 
         except Exception as e:
             self.logger.error(f"Error handling peer {address}: {e}")

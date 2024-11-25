@@ -64,20 +64,23 @@ class Server:
         alive=True
         while alive:
             try:
-                data = connection.recv(1024)
-                data = data.decode(globals.BASIC_DECODER)
-                if len(data) > 2:
-                    self.logger.info(f"(*) received {data} from {address} size: {len(data)}")
-                    data: dict = json.loads(data)
-                    message_type = int(data.get("message_type", -1))
-                    bdata = data.get("data", dict())
-                    if message_type == Server.ClientState.CLOSE.value:   
-                        alive=False
-                        connection.close()
-                        self.logger.info(f"(*) Clossing connection to {address}")
-                    else: 
-                        self.__queue.put((message_type, bdata, address, connection))
-                        self.logger.info(f"(*) {address} request code: {message_type} on queue")
+                bin = connection.recv(1024)
+                self.logger.info(f"(*) received {bin} from {address} size: {len(bin)}")
+                messages:list[bytes] = bin.split(b"\n")
+                for data in messages:
+                    if len(data) > 2:
+                        data = data.decode(globals.BASIC_DECODER)
+                        self.logger.info(f"(*) Decoded message {data}")
+                        data: dict = json.loads(data)
+                        message_type = int(data.get("message_type", -1))
+                        bdata = data.get("data", dict())
+                        if message_type == Server.ClientState.CLOSE.value:   
+                            alive=False
+                            connection.close()
+                            self.logger.info(f"(*) Clossing connection to {address}")
+                        else: 
+                            self.__queue.put((message_type, bdata, address, connection))
+                            self.logger.info(f"(*) {address} request code: {message_type} on queue")
             except json.decoder.JSONDecodeError as e:
                 alive=False
                 connection.close()
@@ -126,7 +129,11 @@ class Server:
                     except Exception as e:
                         message.result = message.MessageResult.ERROR
                     message = json.dumps(message.to_dict()).encode(globals.BASIC_DECODER)
-                    connection.sendall(message)
+                    try:
+                        connection.sendall(message)
+                    except BrokenPipeError as e:
+                        self.logger.error("Clossing connection --resolution: broken-pipe: client must closed the client-connection")
+                        connection.close()
         for _ in range(self.__consumers):
             consumer_thread = threading.Thread(target=consumer)
             self.__consumers_list.append(consumer_thread)

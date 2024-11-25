@@ -67,16 +67,17 @@ class Server:
                 data = connection.recv(1024)
                 data = data.decode(globals.BASIC_DECODER)
                 if len(data) > 2:
-                    self.logger.info(f"(*) received {data} from {address}")
+                    self.logger.info(f"(*) received {data} from {address} size: {len(data)}")
                     data: dict = json.loads(data)
                     message_type = int(data.get("message_type", -1))
                     bdata = data.get("data", dict())
-                    if message_type != Server.ClientState.CLOSE:   
-                        self.__queue.put((message_type, bdata, address, connection))
-                        self.logger.info(f"(*) {address} request code: {message_type} on queue")
-                    else:
+                    if message_type == Server.ClientState.CLOSE.value:   
                         alive=False
                         connection.close()
+                        self.logger.info(f"(*) Clossing connection to {address}")
+                    else: 
+                        self.__queue.put((message_type, bdata, address, connection))
+                        self.logger.info(f"(*) {address} request code: {message_type} on queue")
             except json.decoder.JSONDecodeError as e:
                 alive=False
                 connection.close()

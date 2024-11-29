@@ -108,8 +108,8 @@ class Server():
             hashtable = self.__hashtable
             for key in hashtable:
                 peer_ip = hashtable[key].get("ip", None)
-                peer_port = hashtable[key].get("port", None)
-                sock.connect((peer_ip, int(peer_port)))
+                ports = hashtable[key].get("ports", None)
+                sock.connect((peer_ip, int(ports["userSync"])))
                 sock.send(json.dumps(hashtable).encode(globals.ENCODING))
                 peer_hashtable = sock.recv(1024)
                 peer_hashtable = json.loads(peer_hashtable.decode(globals.ENCODING))
@@ -161,7 +161,8 @@ class Server():
             def run(self) -> None:
                 Server.logger.info(f"Starting client connection thread sync with: {self.get_adress()}")
                 conn = self.get_connection()
-                data = conn.recv(1024)
+                data = conn.recv(4024)
+                Server.logger.info(f"Received from client: {data}")
                 decoded_hashtable = json.loads(data.decode(globals.ENCODING))
                 encoded_hashtable = json.dumps(self.hashtable).encode(globals.ENCODING)
                 conn.sendall(encoded_hashtable)
@@ -263,7 +264,7 @@ class Server():
     def __setup_jobs(self) -> None:
         connection = self.get_service_connection()
         self.scheduler.add_job(self.TableSyncJob(connection=connection(self.get_connection_tuple())), 'interval', seconds=globals.SCHEDULER_TABLE_SYNC_JOB_HOUR_INTERVAL, args=[Server.hashtable])
-        self.scheduler.add_job(self.PeerSyncJob(address=(self.configuration['udht']['manager']['ip'], self.configuration['udht']['manager']['port'])), 'interval', seconds=globals.SCHEDULER_PEER_SYNC_JOB_HOUR_INTERVAL)
+        self.scheduler.add_job(self.PeerSyncJob(address=self.get_connection_tuple()), 'interval', seconds=globals.SCHEDULER_PEER_SYNC_JOB_HOUR_INTERVAL)
         self.scheduler.start()
         Server.logger.info("Sheduler started --resolution: \n(+)\t awaiting for TableSyncJob\n(+)\t awaiting for PeerSyncJob")
     
@@ -307,8 +308,6 @@ class Server():
         
         Server.logger.info(f"Finished hashtable merge in-memory-hashtable: {len(Server.hashtable)} entries")
                 
-                         
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     server = Server()

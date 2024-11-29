@@ -16,6 +16,8 @@ class DHTService:
             registry = hash_table.get(peer.ip, None)
             if not registry:
                 hash_table[peer.peer_id] = peer.serialize()
+                print(hash_table[peer.peer_id])
+                print(peer.peer_id)
                 return True
         return False
     
@@ -41,7 +43,7 @@ class DHTService:
         with shelve.open(self.__filename) as hash_table:
             return hash_table.get(peer_id, None)
     
-    def get_hash_table(self) -> bytes:
+    def get_hash_table(self) -> dict:
         hash_table_copy = dict()
         with shelve.open(self.__filename) as hash_table:  
             hash_table_copy = pickle.dumps(dict(hash_table))

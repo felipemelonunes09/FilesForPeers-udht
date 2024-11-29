@@ -63,7 +63,7 @@ class Server:
             with open(globals.IDENTITY_FILE, "r") as file:
                 result = Peer.load_identity(file)
         except Exception as e:
-            print("Creating a peer identity for you")
+            print("Creating a peer identity for you: ")
             with open(globals.IDENTITY_FILE, "w+") as file:
                 name            = input("Peer Name: ")
                 ip              = input("Peer Ip: ")
@@ -86,6 +86,7 @@ class Server:
                 )
                 self.__identity = peer
                 file.write(json.dumps(peer.serialize()))
+                self.dht_service.create_peer(self.__identity)
         
         while True:
             connection, address = self.__socket.accept()
@@ -133,7 +134,7 @@ class Server:
                     connection.sendall(result)
                 else:
                     message = Server.ServerMessage()
-                    peer_id = data.get("id", "")
+                    peer_id = data.get("peer_id", "")
                     ip = data.get("ip", "")
                     name = data.get("name", "")
                     ports = data.get("ports", "")

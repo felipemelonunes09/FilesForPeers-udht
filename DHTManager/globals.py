@@ -19,3 +19,5 @@ BASIC_DECODER = 'utf-8'
 
 # Socket Settings
 SOCKETS_CONNECTION_LIMIT = 10
+
+IDENTITY_FILE = "data/identity-file.json"

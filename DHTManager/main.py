@@ -1,4 +1,5 @@
 import json
+import uuid
 from utils import get_logger
 from core.DHTService import DHTService
 from typing import List
@@ -19,6 +20,7 @@ class Server:
         DELETE_PEER=5
         UPDATE_PEER=6
         GET_PEER=7
+        SEND_IDENTITY=8
         
     class ServerMessage():
         class MessageAction(Enum):
@@ -26,6 +28,7 @@ class Server:
             REMOVE_PEER="peer remove"
             UPDATE_PEER="peer update"
             GET_PEER="peer get"
+            SEND_IDENTITY="peer id"
         class MessageResult(Enum):
             ERROR="error"    
             COMPLETED="completed"
@@ -39,20 +42,50 @@ class Server:
             return { "action": self.action.value, "result": self.result.value,"data": self.data  }
     
     def __init__(self, port: int, host: str, dht_service: DHTService):
-        self.logger = get_logger("ServerLogger")
-        self.dht_service = dht_service
-        self.__consumers = globals.CONSUMERS_QUANTITY
-        self.__client_list: List[threading.Thread] = list()
-        self.__consumers_list: List[threading.Thread] = list()
-        self.__server_address = (host, port)
-        self.__socket = socket(AF_INET, SOCK_STREAM)
-        self.__queue:Queue[Peer.ptuple] = Queue()
+        self.logger                                     = get_logger("ServerLogger")
+        self.dht_service                                = dht_service
+        self.__consumers                                = globals.CONSUMERS_QUANTITY
+        self.__client_list: List[threading.Thread]      = list()
+        self.__consumers_list: List[threading.Thread]   = list()
+        self.__server_address                           = (host, port)
+        self.__socket                                   = socket(AF_INET, SOCK_STREAM)
+        self.__queue: Queue[Peer.ptuple]                = Queue()
+        self.__identity: Peer                           = None
     
     def start(self) -> None: 
         self.logger.info("(+) Server started.")
         self.__socket.bind(self.__server_address)
         self.__create_consumers()
         self.__socket.listen(globals.SOCKETS_CONNECTION_LIMIT)
+        
+        try:
+            # loads the current identity of the peer
+            with open(globals.IDENTITY_FILE, "r") as file:
+                result = Peer.load_identity(file)
+        except Exception as e:
+            print("Creating a peer identity for you")
+            with open(globals.IDENTITY_FILE, "w+") as file:
+                name            = input("Peer Name: ")
+                ip              = input("Peer Ip: ")
+                user_sync_port  = int(input("User Sync Port: "))
+                file_sync_port  = int(input("File Sync Port: "))
+                network_port    = int(input("Network Port: "))
+                consensus_port  = int(input("Consensus Port: "))
+                # create a peer identity for this peer
+                peer_id = uuid.uuid1()
+                peer = Peer(
+                    peer_id=str(peer_id),
+                    name=name,
+                    ip=ip,
+                    ports={
+                        "userSync": user_sync_port,
+                        "fileSync": file_sync_port,
+                        "networkLayer": network_port,
+                        "consensusPort": consensus_port
+                    }
+                )
+                self.__identity = peer
+                file.write(json.dumps(peer.serialize()))
         
         while True:
             connection, address = self.__socket.accept()
@@ -94,22 +127,27 @@ class Server:
         def consumer() -> None:
             while True:
                 message_type, data, address, connection = self.__queue.get()
-                peer_ip = data.get("peer_ip", "")
-                peer_name = data.get("peer_name", "")
-                peer_port = data.get("peer_port", "")
-                peer = Peer(ip=peer_ip, name=peer_name, port=peer_port)
                 if message_type == Server.ClientState.SEND_HASH_TABLE.value:
                     self.logger.info(f"(*) {address} request: sending hash-table without code")
                     result = self.dht_service.get_hash_table()
                     connection.sendall(result)
                 else:
                     message = Server.ServerMessage()
+                    peer_id = data.get("id", "")
+                    ip = data.get("ip", "")
+                    name = data.get("name", "")
+                    ports = data.get("ports", "")
+                    peer = Peer(ip=ip, name=name, ports=ports, peer_id=peer_id)
                     try:
                         result = False
                         if message_type == Server.ClientState.REMOVE_PEER.value:
                             message.action = Server.ServerMessage.MessageAction.REMOVE_PEER
                             result = self.dht_service.remove_peer(peer)
                             self.logger.info(f"(*) {address} request: removing peer result: {result} ")
+                        elif message_type == Server.ClientState.SEND_IDENTITY.value:
+                            message.action = Server.ServerMessage.MessageAction.SEND_IDENTITY
+                            result = self.__identity.serialize()
+                            self.logger.info(f"(*) {address} request: sending identity: {result}")
                         elif message_type == Server.ClientState.ADD_PEER.value:
                             message.action = Server.ServerMessage.MessageAction.ADD_PEER
                             result = self.dht_service.create_peer(peer)
@@ -117,7 +155,7 @@ class Server:
                             message.data = result
                         elif message_type == Server.ClientState.GET_PEER.value:
                             message.action = Server.ServerMessage.MessageAction.GET_PEER
-                            result: dict[str, str] = self.dht_service.get_peer(peer_ip)
+                            result: dict[str, str] = self.dht_service.get_peer(peer_id)
                             self.logger.info(f"(*) {address} request: getting peer result: {peer} ")
                             message.data = result
                         elif message_type == Server.ClientState.UPDATE_PEER.value:

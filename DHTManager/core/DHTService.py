@@ -15,7 +15,7 @@ class DHTService:
         with shelve.open(self.__filename) as hash_table:
             registry = hash_table.get(peer.ip, None)
             if not registry:
-                hash_table[peer.ip] = peer.to_dict()
+                hash_table[peer.peer_id] = peer.serialize()
                 return True
         return False
     
@@ -24,7 +24,7 @@ class DHTService:
             registry = hash_table.get(peer.ip, None)
             if registry:
                 peer.updated_at = datetime.now()
-                hash_table[peer.ip] = peer.to_dict()
+                hash_table[peer.peer_id] = peer.serialize()
                 return True
         return False
     
@@ -32,14 +32,14 @@ class DHTService:
         with shelve.open(self.__filename) as hash_table:
             registry = hash_table.get(peer.ip, None)
             if registry:
-                hash_table[peer.ip] = None
-                del hash_table[peer.ip]
+                hash_table[peer.peer_id] = None
+                del hash_table[peer.peer_id]
                 return True
         return False
     
-    def get_peer(self, ip: str) -> dict | None:
+    def get_peer(self, peer_id: str) -> dict | None:
         with shelve.open(self.__filename) as hash_table:
-            return hash_table.get(ip, None)
+            return hash_table.get(peer_id, None)
     
     def get_hash_table(self) -> bytes:
         hash_table_copy = dict()
